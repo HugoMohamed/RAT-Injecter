@@ -12,6 +12,7 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <shellapi.h>
 
 #include "dirent.h" //  obtained from GITHUB  https://github.com/tronkko/dirent
 #include <sys/types.h>
@@ -326,6 +327,28 @@ void main(int argc, char **argv)
 			result.append("\" received, ");
 			result.append(to_string(taille));
 			result.append(" bytes received\n");
+		}
+		// 8- Start
+		else if (argvect[0] == "start")
+		{
+			if (argvect.size() < 2)
+				result = "arguments needed";
+			else
+				ShellExecute(NULL, "open", argvect[1].c_str(), NULL, NULL, SW_SHOWNORMAL);
+		}
+		// Help
+		else if (argvect[0] == "help")
+		{
+			result = "Commands :\n";
+			result.append("  dir : list directory\n");
+			result.append("  cd <path> : change directory to <path>\n");
+			result.append("  mkdir <dirname> : create new directory named <dirname>\n");
+			result.append("  rmdir <dirname> : remove <dirname> directory\n");
+			result.append("  del <file> : delete <file>\n");
+			result.append("  get <file> : get <file> to your computer\n");
+			result.append("  put <file> : put <file> to server\n");
+			result.append("  start <program> : launch <program>\n");
+
 		}
 		// Quit
 		else if (argvect[0] == "quit")
