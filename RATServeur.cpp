@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 
-#define IPCLIENT "localhost"
+#define IPCLIENT "172.16.24.45"
 
 #include <windows.h>
 #include "winsock2.h"
@@ -221,11 +221,7 @@ void main(int argc, char **argv)
 					result.append(" removed\n");
 				}
 				else
-				{
-					perror("");
 					result = "command fail\n";
-					return;
-				}
 			}
 		}
 		// 5- Remove file
@@ -242,91 +238,97 @@ void main(int argc, char **argv)
 					result.append(" removed\n");
 				}
 				else
-				{
-					perror("");
 					result = "command fail\n";
-					return;
-				}
 			}
 		}
 		// 6- Get file
 		else if (argvect[0] == "get")
 		{
-			string fileName = argvect[1];
-
-			int length;
-			FILE * file;
-			char * byte_array;
-
-			fopen_s(&file, argvect[1].c_str(), "rb");
-			fseek(file, 0, SEEK_END);
-			length = ftell(file);
-			fseek(file, 0, SEEK_SET);
-			byte_array = (char*)malloc(sizeof(char)*length);
-
-			// envoie de la taille
-			iSendResult = send(ConnectSocket, (char *)(&length), sizeof(int), 0);
-			size_t j = 0;
-			if (!byte_array)
+			if (argvect.size() < 2)
+				result = "arguments needed\n";
+			else
 			{
-				printf("error memory\n");
-				return;
+				string fileName = argvect[1];
+
+				int length;
+				FILE * file;
+				char * byte_array;
+
+				fopen_s(&file, argvect[1].c_str(), "rb");
+				fseek(file, 0, SEEK_END);
+				length = ftell(file);
+				fseek(file, 0, SEEK_SET);
+				byte_array = (char*)malloc(sizeof(char)*length);
+
+				// envoie de la taille
+				iSendResult = send(ConnectSocket, (char *)(&length), sizeof(int), 0);
+				size_t j = 0;
+				if (!byte_array)
+				{
+					printf("error memory\n");
+					return;
+				}
+				// envoie du fichier
+				fread(byte_array, sizeof(char), length, file);
+				iSendResult = send(ConnectSocket, byte_array, length, 0);
+				fclose(file);
+				result = "file <";
+				result.append(fileName);
+				result.append("> received, ");
+				result.append(to_string(length));
+				result.append(" bytes received\n");
 			}
-			// envoie du fichier
-			fread(byte_array, sizeof(char), length, file);
-			iSendResult = send(ConnectSocket, byte_array, length, 0);
-			fclose(file);
-			result = "file <";
-			result.append(fileName);
-			result.append("> received, ");
-			result.append(to_string(length));
-			result.append(" bytes received\n");
 		}
 		// 7- Put file
 		else if (argvect[0] == "put")
 		{
-			int cumul;
-			int taille;
-
-			cumul = 0;
-
-			// reçoit la taille du fichier
-			while (cumul < sizeof(int) - 1) {
-				iResult = recv(ConnectSocket,
-					((char *)(&taille)) + cumul,
-					sizeof(taille),
-					0);
-				cumul += iResult;
-			}
-			cumul = 0;
-			FILE * recv_file;
-
-			// ouverture du fichier avant de recevoir les informations
-			if (fopen_s(&recv_file, argvect[1].c_str(), "ab") != 0)
+			if (argvect.size() < 2)
+				result = "arguments needed\n";
+			else
 			{
-				cout << "could not open" << argvect[1] << endl;
-				return;
-			}
+				int cumul;
+				int taille;
 
-			// recoit tout le fichier
-			while (cumul < taille - 1) {
-				if (cumul + recvbuflen > taille)
-					recvbuflen = taille - cumul;
-				else
-					recvbuflen = DEFAULT_BUFLEN;
-				iResult = recv(ConnectSocket,
-					&recvbuf[0],
-					recvbuflen,
-					0);
-				fwrite(recvbuf, sizeof(char), iResult, recv_file);
-				cumul += iResult;
+				cumul = 0;
+
+				// reçoit la taille du fichier
+				while (cumul < sizeof(int) - 1) {
+					iResult = recv(ConnectSocket,
+						((char *)(&taille)) + cumul,
+						sizeof(taille),
+						0);
+					cumul += iResult;
+				}
+				cumul = 0;
+				FILE * recv_file;
+
+				// ouverture du fichier avant de recevoir les informations
+				if (fopen_s(&recv_file, argvect[1].c_str(), "ab") != 0)
+				{
+					cout << "could not open" << argvect[1] << endl;
+					return;
+				}
+
+				// recoit tout le fichier
+				while (cumul < taille - 1) {
+					if (cumul + recvbuflen > taille)
+						recvbuflen = taille - cumul;
+					else
+						recvbuflen = DEFAULT_BUFLEN;
+					iResult = recv(ConnectSocket,
+						&recvbuf[0],
+						recvbuflen,
+						0);
+					fwrite(recvbuf, sizeof(char), iResult, recv_file);
+					cumul += iResult;
+				}
+				fclose(recv_file);
+				result = "File \"";
+				result.append(argvect[1]);
+				result.append("\" received, ");
+				result.append(to_string(taille));
+				result.append(" bytes received\n");
 			}
-			fclose(recv_file);
-			result = "File \"";
-			result.append(argvect[1]);
-			result.append("\" received, ");
-			result.append(to_string(taille));
-			result.append(" bytes received\n");
 		}
 		// 8- Start
 		else if (argvect[0] == "start")
@@ -334,7 +336,10 @@ void main(int argc, char **argv)
 			if (argvect.size() < 2)
 				result = "arguments needed";
 			else
+			{
 				ShellExecute(NULL, "open", argvect[1].c_str(), NULL, NULL, SW_SHOWNORMAL);
+				result = "program launched\n";
+			}
 		}
 		// Help
 		else if (argvect[0] == "help")
