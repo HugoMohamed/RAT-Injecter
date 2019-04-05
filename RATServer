@@ -140,7 +140,7 @@ void main(int argc, char **argv)
 		char *ptr;
 		DIR *dir;
 		struct dirent *ent;
-		
+
 		vector<string> argvect;
 		int j = 0;
 		string tmp;
@@ -272,6 +272,7 @@ void main(int argc, char **argv)
 				return;
 			}
 			// envoie du fichier
+			fread(byte_array, sizeof(char), length, file);
 			iSendResult = send(ConnectSocket, byte_array, length, 0);
 			fclose(file);
 			result = "file <";
