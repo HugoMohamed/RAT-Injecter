@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 
-#define IPCLIENT "172.16.24.45"
+#define IPCLIENT "localhost"
 
 #include <windows.h>
 #include "winsock2.h"
@@ -291,7 +291,7 @@ void main(int argc, char **argv)
 
 				cumul = 0;
 
-				// reçoit la taille du fichier
+				// reÃ§oit la taille du fichier
 				while (cumul < sizeof(int) - 1) {
 					iResult = recv(ConnectSocket,
 						((char *)(&taille)) + cumul,
