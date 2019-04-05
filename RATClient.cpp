@@ -139,10 +139,9 @@ void main(void)
 			int taille;
 
 			cumul = 0;
-			cout << "TEST1" << endl;
 
 			// reçoit la taille du fichier
-			while (cumul < sizeof(int) - 1) {   
+			while (cumul < sizeof(int) - 1) {
 				iResult = recv(ClientSocket,
 					((char *)(&taille)) + cumul,
 					sizeof(taille),
@@ -161,6 +160,10 @@ void main(void)
 
 			// recoit tout le fichier
 			while (cumul < taille - 1) {
+				if (cumul + recvbuflen > taille)
+					recvbuflen = taille - cumul;
+				else
+					recvbuflen = DEFAULT_BUFLEN;
 				iResult = recv(ClientSocket,
 					&recvbuf[0],
 					recvbuflen,
