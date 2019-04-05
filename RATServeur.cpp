@@ -277,9 +277,55 @@ void main(int argc, char **argv)
 			fclose(file);
 			result = "file <";
 			result.append(fileName);
-			result.append("> sent, ");
+			result.append("> received, ");
 			result.append(to_string(length));
-			result.append(" bytes send\n");
+			result.append(" bytes received\n");
+		}
+		// 7- Put file
+		else if (argvect[0] == "put")
+		{
+			int cumul;
+			int taille;
+
+			cumul = 0;
+
+			// reçoit la taille du fichier
+			while (cumul < sizeof(int) - 1) {
+				iResult = recv(ConnectSocket,
+					((char *)(&taille)) + cumul,
+					sizeof(taille),
+					0);
+				cumul += iResult;
+			}
+			cumul = 0;
+			FILE * recv_file;
+
+			// ouverture du fichier avant de recevoir les informations
+			if (fopen_s(&recv_file, argvect[1].c_str(), "ab") != 0)
+			{
+				cout << "could not open" << argvect[1] << endl;
+				return;
+			}
+
+			// recoit tout le fichier
+			while (cumul < taille - 1) {
+				if (cumul + recvbuflen > taille)
+					recvbuflen = taille - cumul;
+				else
+					recvbuflen = DEFAULT_BUFLEN;
+				iResult = recv(ConnectSocket,
+					&recvbuf[0],
+					recvbuflen,
+					0);
+				fwrite(recvbuf, sizeof(char), iResult, recv_file);
+				cumul += iResult;
+			}
+			fclose(recv_file);
+			result = "File \"";
+			result.append(argvect[1]);
+			result.append("\" received, ");
+			result.append(to_string(taille));
+			result.append(" bytes received\n");
 		}
 		// Quit
 		else if (argvect[0] == "quit")
